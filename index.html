@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FBFAF8">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="回声">
+<meta name="description" content="给亚马逊单干卖家用的工作与学习反馈工具，数据只存在本机。">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-512.png">
+<link rel="manifest" href="manifest.json">
+<title>回声 · 工作与学习反馈</title>
+<style>:root{
+  --bg:#FBFAF8; --surface:#FFFFFF; --neutral:#F1EFE8; --neutral-2:#E7E4DC;
+  --text:#23211E; --text-2:#6B6862; --text-3:#9A968E;
+  --line:rgba(35,33,30,.10); --line-2:rgba(35,33,30,.20);
+  --blue:#185FA5; --blue-dark:#0C447C; --blue-soft:#E6F1FB; --blue-line:#85B7EB; --blue-mid:#B5D4F4;
+  --green:#0F6E56; --green-dark:#085041; --green-soft:#E1F5EE; --green-line:#9FE1CB; --green-mid:#9FE1CB;
+  --r:12px; --r-sm:8px;
+  --font:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font-family:inherit;font-size:inherit}
+button{cursor:pointer}
+button:disabled{cursor:default;opacity:.6}
+.shell{max-width:1080px;margin:0 auto;padding:0 20px 40px}
+.topbar{position:sticky;top:0;z-index:20;background:var(--bg);border-bottom:0.5px solid var(--line);display:flex;align-items:center;gap:18px;flex-wrap:wrap;padding:14px 0 12px;margin-bottom:20px}
+.brand{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:500;white-space:nowrap}
+.brand-mark{width:14px;height:14px;border-radius:4px;background:var(--blue);position:relative;display:inline-block}
+.brand-mark:after{content:"";position:absolute;left:4px;top:4px;width:6px;height:6px;border-radius:50%;background:#fff}
+.brand-sub{font-size:11px;color:var(--text-3);font-weight:400;margin-left:2px}
+.tabs{display:flex;gap:6px;flex:1;min-width:0;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{border:0.5px solid var(--line);background:transparent;color:var(--text-2);border-radius:20px;padding:6px 15px;font-size:12px;white-space:nowrap}
+.tab.active{background:var(--blue-soft);border-color:var(--blue);color:var(--blue-dark);font-weight:500}
+.tab.active.green{background:var(--green-soft);border-color:var(--green);color:var(--green-dark)}
+.topbar-right{font-size:11px;color:var(--text-3);white-space:nowrap}
+.page-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.page-head h1{font-size:16px;font-weight:500;margin:0}
+.page-head p{margin:0;font-size:11px;color:var(--text-3)}
+.subtabs{display:flex;gap:18px;border-bottom:0.5px solid var(--line);margin-bottom:16px;padding-bottom:0}
+.subtab{border:none;background:transparent;color:var(--text-3);font-size:13px;padding:4px 0 10px;position:relative}
+.subtab.active{color:var(--text);font-weight:500}
+.subtab.active:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:var(--green)}
+.subtab-note{margin-left:auto;font-size:11px;color:var(--text-3);align-self:center;padding-bottom:8px}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.metric{background:var(--neutral);border-radius:var(--r-sm);padding:12px 14px}
+.metric-label{font-size:11px;color:var(--text-2)}
+.metric-value{font-size:23px;font-weight:500;margin-top:2px;line-height:1.3}
+.metric-value small{font-size:12px;font-weight:400;color:var(--text-3);margin-left:3px}
+.cols{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:12px;align-items:start}
+.col{display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--surface);border:0.5px solid var(--line);border-radius:var(--r);padding:16px}
+.card-title{font-size:13px;font-weight:500;margin:0 0 4px}
+.card-sub{font-size:11px;color:var(--text-3);margin:0 0 12px;line-height:1.6}
+.input{width:100%;padding:9px 11px;border:0.5px solid var(--line-2);border-radius:var(--r-sm);background:var(--surface);color:var(--text);outline:none}
+.input:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-soft)}
+.input::placeholder{color:var(--text-3)}
+.pill-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px}
+.pill{font-size:11px;padding:4px 10px;border-radius:20px;border:0.5px solid var(--line);background:transparent;color:var(--text-2)}
+.pill.active{background:var(--blue-soft);border-color:var(--blue);color:var(--blue-dark)}
+.pill.active.green{background:var(--green-soft);border-color:var(--green);color:var(--green-dark)}
+.spacer{flex:1}
+.btn{font-size:12px;padding:6px 13px;border-radius:var(--r-sm);border:0.5px solid var(--line-2);background:var(--surface);color:var(--text);white-space:nowrap}
+.btn:hover{border-color:var(--text-2)}
+.btn-primary{background:var(--blue-soft);border-color:var(--blue);color:var(--blue-dark);font-weight:500}
+.btn-primary.green{background:var(--green-soft);border-color:var(--green);color:var(--green-dark)}
+.btn-sm{font-size:11px;padding:3px 10px}
+.btn-link{border:none;background:transparent;color:var(--blue);font-size:11px;padding:2px 0;text-decoration:underline;text-underline-offset:2px}
+.btn-link.green{color:var(--green)}
+.divider{border-top:0.5px solid var(--line);margin:14px 0 10px}
+.mini-label{font-size:11px;color:var(--text-2);margin-bottom:6px}
+.list{font-size:13px}
+.row{display:flex;gap:8px;align-items:center;padding:7px 0;border-bottom:0.5px solid var(--line)}
+.row:last-child{border-bottom:none}
+.dot{width:11px;height:11px;border-radius:3px;flex:none}
+.dot.blue{background:var(--blue)} .dot.green{background:var(--green)} .dot.gray{background:#B4B2A9}
+.row-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tag{font-size:11px;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.tag.blue{background:var(--blue-soft);color:var(--blue-dark)}
+.tag.green{background:var(--green-soft);color:var(--green-dark)}
+.tag.gray{background:var(--neutral);color:var(--text-2)}
+.mins{font-size:11px;color:var(--text-3);white-space:nowrap}
+.echo{border-radius:var(--r);padding:16px;margin-bottom:0}
+.echo.blue{background:var(--blue-soft);border:0.5px solid var(--blue-line)}
+.echo.green{background:var(--green-soft);border:0.5px solid var(--green-line)}
+.echo-label{font-size:11px}
+.echo.blue .echo-label{color:var(--blue)} .echo.green .echo-label{color:var(--green)}
+.echo-num{font-size:22px;font-weight:500;margin:6px 0 10px}
+.echo.blue .echo-num{color:var(--blue-dark)} .echo.green .echo-num{color:var(--green-dark)}
+.bar{height:8px;border-radius:6px;overflow:hidden}
+.bar.blue{background:var(--blue-mid)} .bar.green{background:var(--green-mid)}
+.bar-fill{height:8px;border-radius:6px;transition:width .35s}
+.bar-fill.blue{background:var(--blue)} .bar-fill.green{background:var(--green)}
+.echo-text{font-size:12px;line-height:1.7;margin-top:12px;min-height:40px}
+.echo.blue .echo-text{color:var(--blue-dark)} .echo.green .echo-text{color:var(--green-dark)}
+.funnel{background:var(--neutral);border-radius:var(--r);padding:16px}
+.funnel-line{font-size:13px;color:var(--text);line-height:1.8}
+.funnel-note{font-size:11px;color:var(--text-2);line-height:1.6;margin-top:6px}
+.queue-item{font-size:12px;padding:9px 0;border-bottom:0.5px solid var(--line)}
+.queue-item:last-child{border-bottom:none}
+.queue-top{display:flex;align-items:center;gap:8px}
+.queue-note{font-size:11px;color:var(--text-3);margin-top:4px;line-height:1.6}
+.queue-note.done{color:var(--blue-dark)}
+.checkbox{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);margin-top:9px;cursor:pointer}
+.checkbox input{accent-color:var(--blue);margin:0}
+.more{margin-top:10px}
+.more-head{border:none;background:transparent;color:var(--text-2);font-size:11px;padding:0}
+.more-body{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:11px;color:var(--text-2)}
+.field input,.field select{padding:7px 9px;border:0.5px solid var(--line-2);border-radius:var(--r-sm);background:var(--surface);color:var(--text);outline:none;width:100%}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.fill-form{background:var(--neutral);border-radius:var(--r-sm);padding:12px;margin-top:8px}
+.fill-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;align-items:end;margin-bottom:6px}
+.fill-row .field{gap:2px}
+.foot{font-size:11px;color:var(--text-3);line-height:1.7;margin-top:18px;border-top:0.5px solid var(--line);padding-top:14px}
+.empty{font-size:12px;color:var(--text-3);padding:10px 0;line-height:1.7}
+.report-section{margin-bottom:14px}
+.report-section h3{font-size:13px;font-weight:500;margin:0 0 8px}
+.report-pre{white-space:pre-wrap;word-break:break-word;background:var(--surface);border:0.5px solid var(--line);border-radius:var(--r);padding:14px;font-family:var(--font);font-size:12px;line-height:1.8;margin:0;color:var(--text)}
+.report-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.collapse{border-top:0.5px solid var(--line);margin-top:16px;padding-top:12px}
+.collapse-head{display:flex;align-items:center;gap:8px;border:none;background:transparent;padding:0;font-size:12px;color:var(--text-2);width:100%;text-align:left}
+.collapse-body{margin-top:12px}
+.hint{font-size:11px;color:var(--text-3);line-height:1.7;margin-top:6px}
+.weekbars{display:flex;align-items:flex-end;gap:8px;height:60px;margin-top:4px}
+.weekbar{flex:1;background:var(--blue-mid);border-radius:3px 3px 0 0;min-height:3px}
+.weekbar.green{background:var(--green-mid)}
+.weekbar.today{background:var(--blue)}
+.weekbar.today.green{background:var(--green)}
+.weekdays{display:flex;gap:8px;margin-top:6px}
+.weekdays span{flex:1;text-align:center;font-size:11px;color:var(--text-3)}
+.review-item{display:flex;gap:8px;align-items:center;font-size:12px;padding:7px 0;border-bottom:0.5px solid var(--line)}
+.review-item:last-child{border-bottom:none}
+#toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);background:var(--text);color:#fff;padding:9px 16px;border-radius:20px;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:86vw;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+@media (max-width:760px){
+  .shell{padding:0 14px 32px}
+  .topbar{gap:10px;padding:12px 0 10px;margin-bottom:16px}
+  .brand-sub,.topbar-right{display:none}
+  .tabs{order:3;width:100%;flex:none}
+  .cols{grid-template-columns:minmax(0,1fr)}
+  .metrics{gap:8px}
+  .metric{padding:10px}
+  .metric-value{font-size:20px}
+  .form-grid{grid-template-columns:minmax(0,1fr)}
+  .subtab-note{display:none}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="topbar">
+  <div class="brand"><span class="brand-mark"></span><span>回声</span><span class="brand-sub">工作与学习反馈</span></div>
+  <nav class="tabs" id="tabs"></nav>
+  <div class="topbar-right" id="topbarRight"></div>
+</header>
+<main id="view"></main>
+<footer class="foot" id="foot"></footer>
+</div>
+<div id="toast" role="status" aria-live="polite"></div>
+<script>/* 文案与常量：所有反馈措辞集中在这里，方便以后调整语气 */
+const CONTENT = {
+  STORAGE_KEY: 'amz_feedback_v1',
+  APP_NAME: '回声',
+
+  OPS_VIEWS: [
+    { k: 'opt', label: '在营优化', hint: '已有在卖的品，日常调整与维护' },
+    { k: 'src', label: '选品开发', hint: '找品、测算、打样、上架前' }
+  ],
+  OPS_TYPES: {
+    opt: ['广告', 'Listing', '供应链', '评价客服', '核算', '竞品监控'],
+    src: ['看品', '深挖', '测算', '否决', '打样', '推进']
+  },
+  FUNNEL_MAP: { '看品': 'viewed', '深挖': 'dug', '测算': 'calc', '否决': 'rejected', '推进': 'advanced' },
+  FUNNEL_LABELS: [
+    { k: 'viewed', label: '看了' }, { k: 'dug', label: '深挖' },
+    { k: 'calc', label: '测算' }, { k: 'rejected', label: '否决' }, { k: 'advanced', label: '推进' }
+  ],
+  KNOW_CATS: ['政策合规', '广告', 'Listing', '选品', 'FBA', '核算', '工具'],
+  METRICS: [
+    { k: 'ctr', label: 'CTR', suffix: '%', digits: 2 },
+    { k: 'cvr', label: 'CVR', suffix: '%', digits: 2 },
+    { k: 'acos', label: 'ACOS', suffix: '%', digits: 1 },
+    { k: 'bsr', label: 'BSR', suffix: '', digits: 0 }
+  ],
+  CHECK_DAYS: [3, 7],
+  RULE_REVIEW_DAYS: 30,
+  DEFAULT_SETTINGS: {
+    goalOps: 5, goalKnow: 2, goalOther: 1, weekStart: 1,
+    ai: { baseURL: 'https://api.openai.com/v1', model: 'gpt-4o-mini', key: '' }
+  },
+
+  /* 反馈语料：每条是 (s) => 字符串 或 null。只陈述事实，不夸人、不评判。 */
+  PRAISE_OPS: [
+    s => s.todayCount > 0 && `今天记了 ${s.todayCount} 条、${s.todayMinutes} 分钟的可控动作，覆盖 ${s.typesToday.join('、')}。`,
+    s => s.streak > 1 && `近 30 天有 ${s.streak} 天记了经营动作，这条续上了。中断不清零，只看有没有做可控动作。`,
+    s => s.coldType && `${s.coldType} 已经 ${s.coldDays} 天没动。若是有意为之就没问题；要留个提醒的话，明天可以给它 20 分钟。`,
+    s => s.yesterdayCount > 0 && s.todayCount > s.yesterdayCount && `今天比昨天多 ${s.todayCount - s.yesterdayCount} 条动作，节奏在往上走。`,
+    s => s.weekRejected > 0 && `本周否决了 ${s.weekRejected} 个品，帮你避开了坑，算推进。只看上架数的话，这周会显得白干。`,
+    s => s.pendingChecks > 0 && `有 ${s.pendingChecks} 项调整到了回填时间。数据回来，这次调整才算形成闭环。`,
+    s => s.weekViewCounts.opt > 0 && s.weekViewCounts.src > 0 && `本周在营优化 ${s.weekViewCounts.opt} 条、选品开发 ${s.weekViewCounts.src} 条，两边都没停。`,
+    s => s.longestItem && `今天最专注的一段是 ${s.longestItem.minutes} 分钟的「${s.longestItem.text}」。`,
+    s => s.weekTypes.length >= 4 && `本周动作覆盖了 ${s.weekTypes.length} 条线：${s.weekTypes.slice(0, 4).join('、')}，没有全压在一件事上。`,
+    s => s.bridgedToday > 0 && `今天有 ${s.bridgedToday} 条动作来自学过的知识，7 天后能看到它到底有没有用。`,
+    s => s.todayCount === 1 && `第一条已经记下。单干没人替你验收，写下来本身就是一次确认。`,
+    s => s.todayCount >= s.goalOps && `今天到了自己设的 ${s.goalOps} 条目标。这个数字是你定的，不是别人派的。`,
+    s => s.doneChecks > 0 && `本周有 ${s.doneChecks} 项调整拿到了回填数据，前后差异已经在周报里。`,
+    s => s.weekMinutes > 0 && `本周经营动作累计 ${s.weekMinutes} 分钟，这些时间以前多半是没被记下来的。`,
+    s => s.weekCount > 0 && `本周共 ${s.weekCount} 条可控动作。结果指标滞后，但这一栏是你能控制的。`,
+    s => s.coldView && `${s.coldView} 视图本周还没有记录，切换过去补一条也行，不必勉强。`,
+    s => s.todayCount > 0 && `已记下「${s.lastText}」。这类动作要 3~7 天才有信号，回看队列会替你记着。`
+  ],
+  PRAISE_KNOW: [
+    s => s.gapCat && `本周 ${s.gapCat} 类记了 ${s.gapCatCount} 条，但经营页还没有对应的 ${s.gapCat} 动作。学用之间差一步，挑一条送过去验证，7 天后就有回音。`,
+    s => s.matchedCat && `本周 ${s.matchedCat} 既学了也做了，这条闭环是通的。`,
+    s => s.dueReviews > 0 && `有 ${s.dueReviews} 条规则类知识到了复核时间。回来记一句「仍有效 / 已改」，就算一条有效记录。`,
+    s => s.bridged > 0 && `已经送去经营页验证 ${s.bridged} 条，其中 ${s.bridgedDone} 条拿到了回填数据。`,
+    s => s.streak > 1 && `本区近 30 天有 ${s.streak} 天记录。和其他学习分开算，互不稀释。`,
+    s => s.weekCats.length >= 3 && `本周知识覆盖了 ${s.weekCats.slice(0, 3).join('、')}，不是只盯着一个方向。`,
+    s => s.todayCount > 0 && `今天本区 ${s.todayCount} 条、${s.todayMinutes} 分钟。学过的东西只要没落到动作上，很容易停在「知道」。`,
+    s => s.ruleCount > 0 && `本周记了 ${s.ruleCount} 条规则类知识，都排进了复核队列。平台规则会变，到期会提醒你。`,
+    s => s.todayCount === 1 && `第一条记下了。分类选完就结束，不强制写笔记。`,
+    s => s.weekCount > 0 && `本周本区共 ${s.weekCount} 条。单干没有搭档提醒你打法过时，复核队列就是干这个的。`
+  ],
+  PRAISE_OTHER: [
+    s => s.streak > 1 && `其他学习近 30 天有 ${s.streak} 天记录，这一区独立统计，不和业务比。`,
+    s => s.todayCount > 0 && `今天记了 ${s.todayCount} 条、${s.todayMinutes} 分钟。这一区只看掌握度，不出现任何业务对照。`,
+    s => s.weekCount > 0 && `本周共 ${s.weekCount} 条、${s.weekMinutes} 分钟。不产生业务回音，也不因此打折。`,
+    s => s.noteCount > 0 && `本周有 ${s.noteCount} 条写了自己的理解，比单纯记时长更能说明掌握了什么。`,
+    s => s.todayCount === 1 && `记下了。这一条不用交给谁验收，也不必转成经营动作。`,
+    s => s.todayCount >= s.goalOther && `到了自己设的 ${s.goalOther} 条目标。够了就停。`
+  ],
+
+  CHECK_NOTE: {
+    3: (label, before, after, diff) => `${label} 从 ${before} 到 ${after}，${diff}。样本还小，第 7 天再看一次。`,
+    7: (label, before, after, diff) => `7 天数据：${label} 从 ${before} 到 ${after}，${diff}。这里只陈述变化，不替你判断因果。`
+  },
+
+  AI_SYSTEM: '你是一位给亚马逊单干卖家做周复盘的搭档。只依据用户提供的原始记录说话，不编造数据，不夸奖，不下因果结论，不提泛泛的建议。输出纯文本，分三段，每段以「一、经营」「二、亚马逊知识」「三、其他学习」开头，每段 3~5 句，指出具体事实、被冷落的线、学用脱节之处，以及下周一个可执行的小动作。语气克制、具体。',
+
+  AI_USER: data => `以下是本周原始记录（JSON）：\n${JSON.stringify(data, null, 2)}\n\n请按三段输出周复盘。`,
+
+  EMPTY: {
+    ops: '今天还没有经营动作。记一条就能拿到回音，不用等出单。',
+    know: '本区今天还没有记录。看到一条有用的知识，3 秒记下来就行。',
+    other: '这一区今天还是空的。想记才记，不记也不影响别的区。'
+  }
+};
+
+/* 回声 · 亚马逊单干卖家的工作 / 学习反馈工具
+   纯前端，数据只存本机 localStorage，不上传任何服务器。 */
+(function () {
+  'use strict';
+
+  const KEY = CONTENT.STORAGE_KEY;
+  const DAY = 86400000;
+  const KNOW_TO_OPS = {
+    '政策合规': { view: 'opt', types: ['核算', '供应链'] },
+    '广告': { view: 'opt', types: ['广告'] },
+    'Listing': { view: 'opt', types: ['Listing'] },
+    '选品': { view: 'src', types: ['看品', '深挖', '测算', '否决', '推进'] },
+    'FBA': { view: 'opt', types: ['供应链'] },
+    '核算': { view: 'opt', types: ['核算'] },
+    '工具': { view: 'opt', types: ['竞品监控'] }
+  };
+
+  /* ---------- 基础工具 ---------- */
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function pad(n) { return String(n).padStart(2, '0'); }
+  function dkey(ts) { const d = new Date(ts); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function today() { return dkey(Date.now()); }
+  function daysAgoKey(n) { return dkey(Date.now() - n * DAY); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function weekStart() {
+    const d = new Date(); d.setHours(0, 0, 0, 0);
+    const wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd);
+    return d.getTime();
+  }
+  function inWeek(ts) { return ts >= weekStart(); }
+  function weekKeys() { const a = []; const w = weekStart(); for (let i = 0; i < 7; i++) a.push(dkey(w + i * DAY)); return a; }
+  function daysBetween(ts) { return Math.floor((Date.now() - ts) / DAY); }
+  /* 近 30 天有记录的天数：永不因中断而清零 */
+  function activeDays(items) {
+    const set = new Set(items.map(function (x) { return dkey(x.createdAt); }));
+    let n = 0; for (let i = 0; i < 30; i++) if (set.has(daysAgoKey(i))) n++;
+    return n;
+  }
+  function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
+  function minutesOf(items) { return sum(items.map(function (x) { return Number(x.minutes) || 0; })); }
+  function fmtDate(ts) { const d = new Date(ts); return (d.getMonth() + 1) + '/' + d.getDate(); }
+
+  /* ---------- 数据 ---------- */
+  function blank() {
+    return {
+      version: 1, ops: [], checkbacks: [], knowledge: [], otherStudy: [], bridge: [],
+      settings: JSON.parse(JSON.stringify(CONTENT.DEFAULT_SETTINGS)),
+      reportCache: null, createdAt: Date.now()
+    };
+  }
+  let DB;
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return blank();
+      const d = JSON.parse(raw);
+      const b = blank();
+      ['ops', 'checkbacks', 'knowledge', 'otherStudy', 'bridge'].forEach(function (k) {
+        if (!Array.isArray(d[k])) d[k] = b[k];
+      });
+      d.settings = Object.assign({}, b.settings, d.settings || {});
+      d.settings.ai = Object.assign({}, b.settings.ai, (d.settings || {}).ai || {});
+      return d;
+    } catch (e) { return blank(); }
+  }
+  let storageOK = true;
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(DB)); }
+    catch (e) { storageOK = false; toast('存储空间不可用，这次记录不会被保存'); }
+  }
+  DB = load();
+
+  /* ---------- UI 状态 ---------- */
+  const UI = {
+    tab: 'ops', opsView: 'opt', learnSub: 'know',
+    form: {
+      opsText: '', opsType: { opt: '广告', src: '看品' }, opsMinutes: '25', opsWatch: false,
+      knowText: '', knowCat: '广告', knowMinutes: '25', knowRule: false,
+      knowNote: '', knowUrl: '', knowEffective: '',
+      otherText: '', otherMinutes: '25', otherNote: ''
+    },
+    moreOpen: false, settingsOpen: false, fillOpen: null,
+    aiBusy: false, lastPraise: {}, aiError: ''
+  };
+
+  /* ---------- 路由 ---------- */
+  function parseHash() {
+    const h = (location.hash || '').replace(/^#/, '');
+    if (h.indexOf('learn') === 0) return { tab: 'learn', sub: h.indexOf('other') >= 0 ? 'other' : 'know' };
+    if (h.indexOf('report') === 0) return { tab: 'report' };
+    return { tab: 'ops', view: h.indexOf('src') >= 0 ? 'src' : 'opt' };
+  }
+  function syncFromHash() {
+    const r = parseHash(); UI.tab = r.tab;
+    if (r.view) UI.opsView = r.view;
+    if (r.sub) UI.learnSub = r.sub;
+  }
+  function go(tab, extra) {
+    UI.tab = tab;
+    if (extra === 'src' || extra === 'opt') UI.opsView = extra;
+    if (extra === 'know' || extra === 'other') UI.learnSub = extra;
+    let h = '#' + tab;
+    if (tab === 'ops' && UI.opsView === 'src') h += '-src';
+    if (tab === 'learn' && UI.learnSub === 'other') h += '-other';
+    try { history.replaceState(null, '', h); } catch (e) { location.hash = h; }
+    UI.fillOpen = null; renderAll();
+    window.scrollTo(0, 0);
+  }
+
+  /* ---------- 反馈语料选择 ---------- */
+  function pickPraise(list, state, unit) {
+    const avail = [];
+    list.forEach(function (f) { const t = f(state); if (t) avail.push(t); });
+    if (!avail.length) return CONTENT.EMPTY[unit];
+    let pool = avail.filter(function (t) { return t !== UI.lastPraise[unit]; });
+    if (!pool.length) pool = avail;
+    const seed = sum(today().split('-').map(Number)) + state.todayCount * 3 + state.weekCount;
+    let text = pool[seed % pool.length];
+    if (text === UI.lastPraise[unit] && pool.length > 1) text = pool[(seed + 1) % pool.length];
+    UI.lastPraise[unit] = text;
+    return text;
+  }
+  function coldenType() {
+    const all = CONTENT.OPS_TYPES.opt.concat(CONTENT.OPS_TYPES.src);
+    let best = null;
+    all.forEach(function (t) {
+      const hit = DB.ops.filter(function (o) { return o.type === t; })
+        .sort(function (a, b) { return b.createdAt - a.createdAt; })[0];
+      if (!hit) return; /* 从没做过的类型不算「冷落」，避免新用户收到无意义的提醒 */
+      const d = daysBetween(hit.createdAt);
+      if (!best || d > best.days) best = { type: t, days: d };
+    });
+    if (best && best.days >= 5) return { type: best.type, days: best.days };
+    return null;
+  }
+  function opsState() {
+    const t = today();
+    const td = DB.ops.filter(function (o) { return dkey(o.createdAt) === t; });
+    const wk = DB.ops.filter(function (o) { return inWeek(o.createdAt); });
+    const yd = DB.ops.filter(function (o) { return dkey(o.createdAt) === daysAgoKey(1); });
+    const typesToday = [];
+    td.forEach(function (o) { if (typesToday.indexOf(o.type) < 0) typesToday.push(o.type); });
+    const weekTypes = [];
+    wk.forEach(function (o) { if (weekTypes.indexOf(o.type) < 0) weekTypes.push(o.type); });
+    const cold = coldenType();
+    const longest = td.slice().sort(function (a, b) { return (b.minutes || 0) - (a.minutes || 0); })[0];
+    const pending = DB.checkbacks.filter(function (c) { return c.status === 'pending' && c.dueAt <= Date.now(); }).length;
+    const done = DB.checkbacks.filter(function (c) { return c.status === 'done' && inWeek(c.filledAt || 0); }).length;
+    const vc = { opt: 0, src: 0 };
+    wk.forEach(function (o) { vc[o.view] = (vc[o.view] || 0) + 1; });
+    const rejected = wk.filter(function (o) { return o.type === '否决'; }).length;
+    const bridgedToday = td.filter(function (o) { return o.fromKnow; }).length;
+    return {
+      todayCount: td.length, todayMinutes: minutesOf(td), typesToday: typesToday,
+      yesterdayCount: yd.length, weekCount: wk.length, weekMinutes: minutesOf(wk),
+      weekTypes: weekTypes, weekViewCounts: vc, weekRejected: rejected,
+      streak: activeDays(DB.ops), pendingChecks: pending, doneChecks: done,
+      longestItem: longest, coldType: cold && cold.type, coldDays: cold && cold.days,
+      coldView: wk.length ? (vc.opt === 0 ? '在营优化' : (vc.src === 0 ? '选品开发' : null)) : null,
+      bridgedToday: bridgedToday, goalOps: DB.settings.goalOps,
+      lastText: td.length ? td[td.length - 1].text : ''
+    };
+  }
+  function weekOpsForCat(cat) {
+    const map = KNOW_TO_OPS[cat];
+    if (!map) return 0;
+    return DB.ops.filter(function (o) { return inWeek(o.createdAt) && map.types.indexOf(o.type) >= 0; }).length;
+  }
+  function knowState() {
+    const t = today();
+    const td = DB.knowledge.filter(function (k) { return dkey(k.createdAt) === t; });
+    const wk = DB.knowledge.filter(function (k) { return inWeek(k.createdAt); });
+    const cats = []; wk.forEach(function (k) { if (cats.indexOf(k.cat) < 0) cats.push(k.cat); });
+    let gap = null, matched = null;
+    cats.forEach(function (c) {
+      const n = wk.filter(function (k) { return k.cat === c; }).length;
+      if (weekOpsForCat(c) === 0 && (!gap || n > gap.n)) gap = { cat: c, n: n };
+      if (weekOpsForCat(c) > 0 && !matched) matched = c;
+    });
+    const due = DB.knowledge.filter(function (k) { return k.isRule && !k.reviewedAt && k.reviewAt && k.reviewAt <= Date.now(); }).length;
+    const bridged = DB.bridge.length;
+    const bridgedDone = DB.bridge.filter(function (b) {
+      return DB.checkbacks.some(function (c) { return c.actionId === b.actionId && c.status === 'done'; });
+    }).length;
+    return {
+      todayCount: td.length, todayMinutes: minutesOf(td), weekCount: wk.length,
+      weekMinutes: minutesOf(wk), weekCats: cats, streak: activeDays(DB.knowledge),
+      gapCat: gap && gap.cat, gapCatCount: gap && gap.n, matchedCat: matched,
+      dueReviews: due, bridged: bridged, bridgedDone: bridgedDone,
+      ruleCount: wk.filter(function (k) { return k.isRule; }).length,
+      goalKnow: DB.settings.goalKnow
+    };
+  }
+  function otherState() {
+    const t = today();
+    const td = DB.otherStudy.filter(function (o) { return dkey(o.createdAt) === t; });
+    const wk = DB.otherStudy.filter(function (o) { return inWeek(o.createdAt); });
+    return {
+      todayCount: td.length, todayMinutes: minutesOf(td), weekCount: wk.length,
+      weekMinutes: minutesOf(wk), streak: activeDays(DB.otherStudy),
+      noteCount: wk.filter(function (o) { return o.note; }).length,
+      goalOther: DB.settings.goalOther
+    };
+  }
+
+  /* ---------- 业务动作 ---------- */
+  function addWatchFor(action) {
+    CONTENT.CHECK_DAYS.forEach(function (d) {
+      DB.checkbacks.push({
+        id: uid(), actionId: action.id, day: d, dueAt: action.createdAt + d * DAY,
+        status: 'pending', metrics: [], note: '', filledAt: 0
+      });
+    });
+  }
+  function addOps() {
+    const f = UI.form;
+    const text = (f.opsText || '').trim();
+    if (!text) { toast('先写一句做了什么'); return; }
+    const view = UI.opsView;
+    const type = f.opsType[view] || CONTENT.OPS_TYPES[view][0];
+    const minutes = Math.max(0, Number(f.opsMinutes) || 0);
+    const action = {
+      id: uid(), text: text, view: view, type: type, minutes: minutes,
+      createdAt: Date.now(), watch: !!f.opsWatch, fromKnow: false
+    };
+    DB.ops.push(action);
+    if (action.watch) addWatchFor(action);
+    f.opsText = ''; f.opsWatch = false;
+    save(); renderAll();
+    toast(action.watch ? '已记下，并排进第 3 / 7 天回看' : '已记下，这条动作有回音了');
+  }
+  function addKnow() {
+    const f = UI.form;
+    const text = (f.knowText || '').trim();
+    if (!text) { toast('先写一句学到了什么'); return; }
+    const isRule = !!f.knowRule;
+    DB.knowledge.push({
+      id: uid(), text: text, cat: f.knowCat || CONTENT.KNOW_CATS[0],
+      minutes: Math.max(0, Number(f.knowMinutes) || 0),
+      note: (f.knowNote || '').trim(), sourceUrl: (f.knowUrl || '').trim(),
+      effectiveDate: f.knowEffective || '', isRule: isRule,
+      reviewAt: isRule ? Date.now() + CONTENT.RULE_REVIEW_DAYS * DAY : 0,
+      reviewedAt: 0, reviewResult: '', isReview: false, createdAt: Date.now()
+    });
+    f.knowText = ''; f.knowNote = ''; f.knowUrl = ''; f.knowEffective = '';
+    f.knowRule = false; UI.moreOpen = false;
+    save(); renderAll(); toast('已记下，这条知识归到本区');
+  }
+  function addOther() {
+    const f = UI.form;
+    const text = (f.otherText || '').trim();
+    if (!text) { toast('先写一句学了什么'); return; }
+    DB.otherStudy.push({
+      id: uid(), text: text, minutes: Math.max(0, Number(f.otherMinutes) || 0),
+      note: (f.otherNote || '').trim(), createdAt: Date.now()
+    });
+    f.otherText = ''; f.otherNote = '';
+    save(); renderAll(); toast('已记下，这一区不跟业务比');
+  }
+  function sendToOps(kid) {
+    const k = DB.knowledge.filter(function (x) { return x.id === kid; })[0];
+    if (!k) return;
+    if (DB.bridge.some(function (b) { return b.kid === kid; })) { toast('这条已经送过去了'); return; }
+    const map = KNOW_TO_OPS[k.cat] || { view: 'opt', types: ['竞品监控'] };
+    const action = {
+      id: uid(), text: '验证：' + k.text, view: map.view, type: map.types[0],
+      minutes: 0, createdAt: Date.now(), watch: true, fromKnow: true
+    };
+    DB.ops.push(action); addWatchFor(action);
+    DB.bridge.push({ id: uid(), kid: kid, actionId: action.id, createdAt: Date.now() });
+    save(); renderAll(); toast('已生成经营页待验证动作，7 天后回看');
+  }
+  function doReview(id, result) {
+    const k = DB.knowledge.filter(function (x) { return x.id === id; })[0];
+    if (!k) return;
+    k.reviewedAt = Date.now(); k.reviewResult = result;
+    DB.knowledge.push({
+      id: uid(), text: '复核：' + k.text + ' → ' + result, cat: k.cat, minutes: 0,
+      note: '', sourceUrl: '', effectiveDate: '', isRule: true,
+      reviewAt: Date.now() + CONTENT.RULE_REVIEW_DAYS * DAY,
+      reviewedAt: 0, reviewResult: '', isReview: true, createdAt: Date.now()
+    });
+    save(); renderAll(); toast('复核记下了，算一条有效记录');
+  }
+  function saveFill(id) {
+    const c = DB.checkbacks.filter(function (x) { return x.id === id; })[0];
+    if (!c) return;
+    const metrics = [], notes = [];
+    CONTENT.METRICS.forEach(function (m) {
+      const b = document.querySelector('[data-fill-b="' + m.k + '"]');
+      const a = document.querySelector('[data-fill-a="' + m.k + '"]');
+      if (!b || !a) return;
+      const bv = parseFloat(b.value), av = parseFloat(a.value);
+      if (isNaN(bv) || isNaN(av)) return;
+      metrics.push({ k: m.k, label: m.label, before: bv, after: av });
+      const diff = av - bv;
+      let dtext;
+      if (diff === 0) dtext = '基本没变';
+      else dtext = (diff > 0 ? '升了 ' : '降了 ') + Math.abs(diff).toFixed(m.digits) + (m.suffix === '%' ? ' pt' : '');
+      const bs = bv.toFixed(m.digits) + m.suffix, as = av.toFixed(m.digits) + m.suffix;
+      notes.push(CONTENT.CHECK_NOTE[c.day](m.label, bs, as, dtext));
+    });
+    if (!metrics.length) { toast('至少填一组调整前后的数字'); return; }
+    c.metrics = metrics; c.note = notes.join('\n'); c.status = 'done'; c.filledAt = Date.now();
+    UI.fillOpen = null; save(); renderAll(); toast('已回填，只陈述变化，不替你判断因果');
+  }
+
+  /* ---------- 周报 ---------- */
+  function weekData() {
+    return {
+      week: weekKeys()[0] + ' ~ ' + weekKeys()[6],
+      ops: DB.ops.filter(function (o) { return inWeek(o.createdAt); })
+        .map(function (o) { return { 日期: dkey(o.createdAt), 视图: o.view === 'opt' ? '在营优化' : '选品开发', 类型: o.type, 内容: o.text, 分钟: o.minutes, 已回看: !!o.watch }; }),
+      checkbacks: DB.checkbacks.filter(function (c) { return c.status === 'done' && inWeek(c.filledAt || 0); })
+        .map(function (c) { return { 第几天: c.day, 结论: c.note }; }),
+      pendingChecks: DB.checkbacks.filter(function (c) { return c.status === 'pending' && c.dueAt <= Date.now(); }).length,
+      knowledge: DB.knowledge.filter(function (k) { return inWeek(k.createdAt); })
+        .map(function (k) { return { 日期: dkey(k.createdAt), 分类: k.cat, 内容: k.text, 分钟: k.minutes, 规则类: !!k.isRule }; }),
+      otherStudy: DB.otherStudy.filter(function (o) { return inWeek(o.createdAt); })
+        .map(function (o) { return { 日期: dkey(o.createdAt), 内容: o.text, 分钟: o.minutes, 有自己的理解: !!o.note }; }),
+      bridge: DB.bridge.length,
+      dueReviews: DB.knowledge.filter(function (k) { return k.isRule && !k.reviewedAt && k.reviewAt && k.reviewAt <= Date.now(); }).length
+    };
+  }
+  function buildRuleReport() {
+    const d = weekData(), s = opsState(), k = knowState(), o = otherState();
+    const types = []; d.ops.forEach(function (x) { if (types.indexOf(x.类型) < 0) types.push(x.类型); });
+    const cats = []; d.knowledge.forEach(function (x) { if (cats.indexOf(x.分类) < 0) cats.push(x.分类); });
+    const a = [];
+    a.push('一、经营\n本周共 ' + d.ops.length + ' 条可控动作、' + s.weekMinutes + ' 分钟，覆盖 ' + (types.length ? types.join('、') : '暂无') + '。在营优化 ' + s.weekViewCounts.opt + ' 条、选品开发 ' + s.weekViewCounts.src + ' 条。');
+    a.push(s.coldType ? (s.coldType + ' 已经 ' + s.coldDays + ' 天没有动作，是有意搁置还是漏了，值得确认一下。') : '各条线本周都有动作，没有明显空档。');
+    a.push(s.weekRejected ? ('本周否决 ' + s.weekRejected + ' 个品，这些否决同样算推进。') : '本周没有记录到否决的品。');
+    a.push(d.checkbacks.length ? ('拿到回填数据的调整 ' + d.checkbacks.length + ' 项：' + d.checkbacks.map(function (c) { return c.结论.replace(/\n/g, ' '); }).join(' / ')) : '本周还没有回填过回看数据。');
+    a.push(d.pendingChecks ? ('还有 ' + d.pendingChecks + ' 项到了回填时间，数据回来才算闭环。') : '到期的回看都处理完了。');
+    a.push('下周一个小动作：挑 ' + (s.coldType || '广告') + ' 留 20 分钟，做完当场记一条。');
+    const b = [];
+    b.push('二、亚马逊知识\n本区本周 ' + d.knowledge.length + ' 条、' + k.weekMinutes + ' 分钟，覆盖 ' + (cats.length ? cats.join('、') : '暂无') + '。');
+    b.push(k.gapCat ? ('学用脱节：' + k.gapCat + ' 记了 ' + k.gapCatCount + ' 条，但经营页本周没有对应动作。挑一条送过去验证，7 天后就有回音。') : (k.matchedCat ? ('本周 ' + k.matchedCat + ' 既学了也做了，闭环是通的。') : '本周还没有可以对照的学习记录。'));
+    b.push('已送去经营页验证 ' + k.bridged + ' 条，其中 ' + k.bridgedDone + ' 条拿到了回填数据。');
+    b.push(k.dueReviews ? ('有 ' + k.dueReviews + ' 条规则类知识到期复核，平台规则会变，回来记一句「仍有效 / 已改」即可。') : '规则复核队列没有逾期项。');
+    b.push('下周一个小动作：把本周最有用的一条结论送进经营页，别让它停在「知道」。');
+    const c = [];
+    c.push('三、其他学习\n本周 ' + d.otherStudy.length + ' 条、' + o.weekMinutes + ' 分钟，其中 ' + o.noteCount + ' 条写了自己的理解。');
+    c.push('这一区只看掌握度，不产生业务回音，也不跟经营页比较。');
+    c.push('下周一个小动作：保持现在的节奏就够了，不必加量。');
+    return [a.join('\n'), b.join('\n'), c.join('\n')];
+  }
+  function currentReport() {
+    const wk = weekKeys()[0];
+    if (DB.reportCache && DB.reportCache.week === wk && DB.reportCache.sections && DB.reportCache.sections.length === 3 && DB.reportCache.by === 'ai') {
+      return DB.reportCache.sections;
+    }
+    return buildRuleReport();
+  }
+  async function runAI() {
+    const ai = DB.settings.ai;
+    if (!ai.key) { toast('先在下方设置里填模型 key，或者直接用规则版周报'); UI.settingsOpen = true; renderAll(); return; }
+    UI.aiBusy = true; UI.aiError = ''; renderAll();
+    try {
+      const base = String(ai.baseURL || '').replace(/\/+$/, '');
+      const res = await fetch(base + '/chat/completions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ai.key },
+        body: JSON.stringify({
+          model: ai.model, temperature: 0.4,
+          messages: [
+            { role: 'system', content: CONTENT.AI_SYSTEM },
+            { role: 'user', content: CONTENT.AI_USER(weekData()) }
+          ]
+        })
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const j = await res.json();
+      const text = (((j.choices || [])[0] || {}).message || {}).content || '';
+      if (!text.trim()) throw new Error('返回内容为空');
+      const parts = text.split(/(?=[一二三]、)/).filter(function (p) { return /^[一二三]、/.test(p.trim()); });
+      let sections = parts.length === 3 ? parts.map(function (p) { return p.trim(); }) : null;
+      if (!sections) {
+        const marks = ['一、经营', '二、亚马逊知识', '三、其他学习'];
+        const idx = marks.map(function (m) { return text.indexOf(m); });
+        sections = idx[0] >= 0 && idx[1] > idx[0] && idx[2] > idx[1]
+          ? [text.slice(idx[0], idx[1]).trim(), text.slice(idx[1], idx[2]).trim(), text.slice(idx[2]).trim()]
+          : [text.trim(), buildRuleReport()[1], buildRuleReport()[2]];
+      }
+      DB.reportCache = { week: weekKeys()[0], by: 'ai', sections: sections, generatedAt: Date.now() };
+      save(); toast('AI 周复盘已生成');
+    } catch (e) {
+      UI.aiError = '调用失败：' + e.message + '。常见原因是端点不允许浏览器直连（CORS）或 key 无效。已保留规则版周报。';
+    }
+    UI.aiBusy = false; renderAll();
+  }
+  function copyReport() {
+    const text = currentReport().join('\n\n');
+    const done = function () { toast('周报已复制，可以发给别人要一句反馈'); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done).catch(function () { fallbackCopy(text, done); });
+    } else fallbackCopy(text, done);
+  }
+  function fallbackCopy(text, done) {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'absolute'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { toast('复制失败，请长按选中文本'); }
+    document.body.removeChild(ta);
+  }
+
+  /* ---------- 备份 ---------- */
+  function exportJSON() {
+    try {
+      const blob = new Blob([JSON.stringify(DB, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = '回声-备份-' + today() + '.json';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+      toast('备份已导出');
+    } catch (e) { toast('导出失败：' + e.message); }
+  }
+  function importJSON(file) {
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = function () {
+      try {
+        const d = JSON.parse(r.result);
+        if (!d || typeof d !== 'object') throw new Error('格式不对');
+        ['ops', 'checkbacks', 'knowledge', 'otherStudy', 'bridge'].forEach(function (k) {
+          if (!Array.isArray(d[k])) return;
+          const seen = {};
+          DB[k].forEach(function (x) { seen[x.id] = 1; });
+          d[k].forEach(function (x) { if (x && x.id && !seen[x.id]) DB[k].push(x); });
+        });
+        if (d.settings) {
+          DB.settings = Object.assign({}, DB.settings, d.settings);
+          DB.settings.ai = Object.assign({}, DB.settings.ai, d.settings.ai || {});
+        }
+        save(); renderAll(); toast('已按 id 去重合并');
+      } catch (e) { toast('导入失败：' + e.message); }
+    };
+    r.readAsText(file);
+  }
+  function clearAll() {
+    if (!window.confirm('确定清空本机所有记录吗？此操作不可撤销，建议先导出备份。')) return;
+    if (!window.confirm('再确认一次：所有经营、学习、回看记录都会被删除。')) return;
+    DB = blank(); save(); UI.settingsOpen = false; renderAll(); toast('已清空');
+  }
+
+  /* ---------- 片段 ---------- */
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(function () { el.classList.remove('show'); }, 2400);
+  }
+  function metrics(items) {
+    return '<div class="metrics">' + items.map(function (i) {
+      return '<div class="metric"><div class="metric-label">' + esc(i.label) + '</div><div class="metric-value">' + esc(i.value) + (i.small ? '<small>' + esc(i.small) + '</small>' : '') + '</div></div>';
+    }).join('') + '</div>';
+  }
+  function echoCard(unit, state, list, color, label, num, ratio) {
+    const text = pickPraise(list, state, unit);
+    return '<div class="echo ' + color + '">' +
+      '<div class="echo-label">' + esc(label) + '</div>' +
+      '<div class="echo-num">' + esc(num) + '</div>' +
+      '<div class="bar ' + color + '"><div class="bar-fill ' + color + '" style="width:' + Math.min(100, Math.round(ratio * 100)) + '%"></div></div>' +
+      '<div class="echo-text">' + esc(text) + '</div></div>';
+  }
+  function pillRow(items, current, attr, act, color) {
+    return items.map(function (i) {
+      const v = typeof i === 'string' ? i : i.v, l = typeof i === 'string' ? i : i.l;
+      return '<button class="pill' + (String(current) === String(v) ? ' active ' + (color || '') : '') + '" data-act="' + act + '" ' + attr + '="' + esc(v) + '">' + esc(l) + '</button>';
+    }).join('');
+  }
+  function weekBars(items, color) {
+    const keys = weekKeys(), counts = keys.map(function (k) {
+      return items.filter(function (x) { return dkey(x.createdAt) === k; }).length;
+    });
+    const max = Math.max.apply(null, counts.concat([1]));
+    const names = ['一', '二', '三', '四', '五', '六', '日'];
+    return '<div class="weekbars">' + counts.map(function (c, i) {
+      const h = Math.max(3, Math.round(c / max * 56));
+      return '<div class="weekbar ' + color + (keys[i] === today() ? ' today' : '') + '" style="height:' + h + 'px"></div>';
+    }).join('') + '</div><div class="weekdays">' + names.map(function (n) { return '<span>' + n + '</span>'; }).join('') + '</div>';
+  }
+  function rows(items, color, opts) {
+    if (!items.length) return '<div class="empty">' + esc(opts.empty) + '</div>';
+    return '<div class="list">' + items.map(function (x) {
+      return '<div class="row"><span class="dot ' + color + '"></span>' +
+        '<span class="row-text" title="' + esc(x.text) + '">' + esc(x.text) + '</span>' +
+        '<span class="tag ' + color + '">' + esc(x.tag) + '</span>' +
+        '<span class="mins">' + (x.minutes ? x.minutes + ' 分' : esc(x.extra || '')) + '</span>' +
+        (x.action || '') + '</div>';
+    }).join('') + '</div>';
+  }
+
+  /* ---------- 页面：经营 ---------- */
+  function renderOps() {
+    const s = opsState(), v = UI.opsView, f = UI.form;
+    const types = CONTENT.OPS_TYPES[v];
+    if (types.indexOf(f.opsType[v]) < 0) f.opsType[v] = types[0];
+    const pending = DB.checkbacks.filter(function (c) { return c.status === 'pending' && c.dueAt <= Date.now(); });
+    const doneList = DB.checkbacks.filter(function (c) { return c.status === 'done'; }).slice(-3).reverse();
+    const td = DB.ops.filter(function (o) { return dkey(o.createdAt) === today(); }).slice().reverse();
+
+    let html = '<div class="page-head"><h1>经营</h1><p>反馈锚点：可控动作 · 不看日销量与 BSR</p></div>';
+    html += '<div class="pill-row" style="margin:0 0 14px">' +
+      pillRow(CONTENT.OPS_VIEWS.map(function (x) { return { v: x.k, l: x.label }; }), v, 'data-view', 'ops-view', '') +
+      '<span class="spacer"></span><span style="font-size:11px;color:var(--text-3)">' +
+      esc(CONTENT.OPS_VIEWS.filter(function (x) { return x.k === v; })[0].hint) + '</span></div>';
+    html += metrics([
+      { label: '今日经营动作', value: s.todayCount + ' 条', small: s.todayMinutes + ' 分' },
+      { label: '待回填信号', value: pending.length + ' 项' },
+      { label: '本周否决品', value: s.weekRejected + ' 个' }
+    ]);
+
+    html += '<div class="cols"><div class="col">';
+    /* 快速记录 */
+    html += '<div class="card"><div class="card-title">刚做完什么</div>' +
+      '<div class="card-sub">只填一句 + 选类型，3 秒结束。勾「要回看」会排进第 3 / 7 天。</div>' +
+      '<input class="input" data-model="opsText" placeholder="例：把 A 词竞价从 0.85 降到 0.70" value="' + esc(f.opsText) + '">' +
+      '<div class="pill-row">' + pillRow(types, f.opsType[v], 'data-type', 'ops-type', '') + '</div>' +
+      '<div class="pill-row">' +
+      pillRow([{ v: '15', l: '15 分' }, { v: '25', l: '25 分' }, { v: '45', l: '45 分' }, { v: '60', l: '60 分' }], f.opsMinutes, 'data-mins', 'ops-mins', '') +
+      '<label class="checkbox"><input type="checkbox" data-check="opsWatch"' + (f.opsWatch ? ' checked' : '') + '> 要回看</label>' +
+      '<span class="spacer"></span><button class="btn btn-primary" data-act="add-ops">记一条</button></div></div>';
+    /* 今日清单 */
+    html += '<div class="card"><div class="card-title">今天的动作</div><div class="card-sub">共 ' + td.length + ' 条 · ' + minutesOf(td) + ' 分钟</div>' +
+      rows(td.map(function (o) { return { text: o.text, tag: o.type, minutes: o.minutes, extra: o.watch ? '回看中' : '' }; }), 'blue', { empty: CONTENT.EMPTY.ops }) + '</div>';
+    html += '</div><div class="col">';
+    /* 即时回音 */
+    html += echoCard('ops', s, CONTENT.PRAISE_OPS, 'blue', '即时回音',
+      s.todayCount + ' 条 · ' + s.todayMinutes + ' 分', s.todayCount / Math.max(1, DB.settings.goalOps));
+    /* 回看队列 */
+    html += '<div class="card"><div class="card-title">该回填数据了</div>' +
+      '<div class="card-sub">只陈述前后变化，不替你判断因果。数字手工填，不接任何付费数据源。</div>';
+    if (!pending.length && !doneList.length) html += '<div class="empty">还没有到期的回看。记动作时勾「要回看」就会在这里出现。</div>';
+    pending.slice(0, 6).forEach(function (c) {
+      const a = DB.ops.filter(function (o) { return o.id === c.actionId; })[0];
+      html += '<div class="queue-item"><div class="queue-top"><span style="flex:1">' +
+        esc(a ? a.text : '某次调整') + '</span><span class="tag blue">第 ' + c.day + ' 天</span>' +
+        '<button class="btn btn-sm" data-act="fill-open" data-id="' + c.id + '">' + (UI.fillOpen === c.id ? '收起' : '回填') + '</button></div>' +
+        '<div class="queue-note">到期 ' + fmtDate(c.dueAt) + ' · 待填 CTR / CVR / ACOS / BSR 中任意几项</div>';
+      if (UI.fillOpen === c.id) {
+        html += '<div class="fill-form"><div class="mini-label">填调整前 / 现在的数字，留空的指标会自动跳过</div>';
+        CONTENT.METRICS.forEach(function (m) {
+          html += '<div class="fill-row"><div class="field"><label>' + m.label + '</label></div>' +
+            '<div class="field"><label>调整前</label><input type="number" step="any" data-fill-b="' + m.k + '" placeholder="0"></div>' +
+            '<div class="field"><label>现在</label><input type="number" step="any" data-fill-a="' + m.k + '" placeholder="0"></div></div>';
+        });
+        html += '<button class="btn btn-primary btn-sm" data-act="fill-save" data-id="' + c.id + '">保存回填</button></div>';
+      }
+      html += '</div>';
+    });
+    doneList.forEach(function (c) {
+      const a = DB.ops.filter(function (o) { return o.id === c.actionId; })[0];
+      html += '<div class="queue-item"><div class="queue-top"><span style="flex:1">' + esc(a ? a.text : '某次调整') +
+        '</span><span class="tag gray">第 ' + c.day + ' 天 · 已回填</span></div>' +
+        '<div class="queue-note done">' + esc(c.note).replace(/\n/g, '<br>') + '</div></div>';
+    });
+    html += '</div>';
+    /* 选品漏斗 */
+    const funnel = {}; CONTENT.FUNNEL_LABELS.forEach(function (x) { funnel[x.k] = 0; });
+    DB.ops.filter(function (o) { return o.view === 'src' && inWeek(o.createdAt); }).forEach(function (o) {
+      const k = CONTENT.FUNNEL_MAP[o.type]; if (k) funnel[k] += 1;
+    });
+    html += '<div class="funnel"><div class="card-title">本周选品漏斗</div>' +
+      '<div class="funnel-line">' + CONTENT.FUNNEL_LABELS.map(function (x) { return x.label + ' ' + funnel[x.k]; }).join(' → ') + '</div>' +
+      '<div class="funnel-note">' + (funnel.rejected ? '本周 ' + funnel.rejected + ' 个否决帮你避开了坑，算推进。只看上架数的话，这周会显得白干。' : '在「选品开发」视图里记动作，漏斗会自动累加；否决同样计入推进。') + '</div></div>';
+    /* 本周节奏 */
+    html += '<div class="card"><div class="card-title">本周经营节奏</div><div class="card-sub">只数可控动作，不数单量</div>' +
+      weekBars(DB.ops, 'blue') + '</div>';
+    html += '</div></div>';
+    return html;
+  }
+
+  /* ---------- 页面：学习 ---------- */
+  function renderLearnKnow() {
+    const s = knowState(), f = UI.form;
+    const recent = DB.knowledge.filter(function (k) { return !k.isReview; }).slice().reverse().slice(0, 6);
+    const bridgedIds = {}; DB.bridge.forEach(function (b) { bridgedIds[b.kid] = b; });
+    const rules = DB.knowledge.filter(function (k) { return k.isRule && !k.reviewedAt; })
+      .sort(function (a, b) { return a.reviewAt - b.reviewAt; }).slice(0, 5);
+    let html = metrics([
+      { label: '本周本区', value: s.weekCount + ' 条', small: s.weekMinutes + ' 分' },
+      { label: '已送去验证', value: s.bridged + ' 条' },
+      { label: '待复核规则', value: s.dueReviews + ' 条' }
+    ]);
+    html += '<div class="cols"><div class="col">';
+    html += '<div class="card"><div class="card-title">刚学了什么</div>' +
+      '<div class="card-sub">默认只填内容 + 分类 + 时长。自测、出处、生效日都收在「展开更多」里，不强制。</div>' +
+      '<input class="input" data-model="knowText" placeholder="例：广告位竞价只调搜索结果顶部以外的位置" value="' + esc(f.knowText) + '">' +
+      '<div class="pill-row">' + pillRow(CONTENT.KNOW_CATS, f.knowCat, 'data-cat', 'know-cat', 'green') + '</div>' +
+      '<div class="pill-row">' +
+      pillRow([{ v: '15', l: '15 分' }, { v: '25', l: '25 分' }, { v: '45', l: '45 分' }, { v: '60', l: '60 分' }], f.knowMinutes, 'data-mins', 'know-mins', 'green') +
+      '<span class="spacer"></span><button class="btn btn-primary green" data-act="add-know">记一条</button></div>' +
+      '<label class="checkbox"><input type="checkbox" data-check="knowRule"' + (f.knowRule ? ' checked' : '') + '> 规则 / 政策类，会过期（排进 30 天复核队列）</label>';
+    html += '<div class="more"><button class="more-head" data-act="toggle-more">' + (UI.moreOpen ? '▾ 收起更多（可选）' : '▸ 展开更多（可选）') + '</button>';
+    if (UI.moreOpen) {
+      html += '<div class="more-body">' +
+        '<div class="field"><label>我自己的理解（选填）</label><input data-model="knowNote" value="' + esc(f.knowNote) + '" placeholder="用自己的话说一遍"></div>' +
+        '<div class="form-grid">' +
+        '<div class="field"><label>出处链接（选填）</label><input data-model="knowUrl" value="' + esc(f.knowUrl) + '" placeholder="https://"></div>' +
+        '<div class="field"><label>生效日期（选填）</label><input type="date" data-model="knowEffective" value="' + esc(f.knowEffective) + '"></div>' +
+        '</div></div>';
+    }
+    html += '</div></div>';
+    html += '<div class="card"><div class="card-title">最近记的</div>' +
+      '<div class="card-sub">分类与经营页动作类型对齐，周报里会做学用对照。</div>' +
+      rows(recent.map(function (k) {
+        return { text: k.text, tag: k.cat, minutes: k.minutes, extra: k.isRule ? '规则类' : '' };
+      }), 'green', { empty: CONTENT.EMPTY.know }) + '</div>';
+    html += '</div><div class="col">';
+    html += echoCard('know', s, CONTENT.PRAISE_KNOW, 'green', '即时回音',
+      s.todayCount + ' 条 · ' + s.todayMinutes + ' 分', s.todayCount / Math.max(1, DB.settings.goalKnow));
+    /* 桥 */
+    html += '<div class="card"><div class="card-title">送去经营页验证</div>' +
+      '<div class="card-sub">只有本区的结论会生成经营页待验证动作，同样进第 3 / 7 天回看。</div>';
+    if (!recent.length) html += '<div class="empty">还没有知识记录。</div>';
+    recent.slice(0, 5).forEach(function (k) {
+      const b = bridgedIds[k.id];
+      let status = '<button class="btn btn-sm" data-act="bridge-send" data-kid="' + k.id + '">送过去</button>';
+      if (b) {
+        const done = DB.checkbacks.some(function (c) { return c.actionId === b.actionId && c.status === 'done'; });
+        status = '<span class="tag ' + (done ? 'blue' : 'gray') + '">' + (done ? '已回填' : '第 3 天回看中') + '</span>';
+      }
+      html += '<div class="review-item"><span class="row-text" title="' + esc(k.text) + '">' + esc(k.text) + '</span>' + status + '</div>';
+    });
+    html += '</div>';
+    /* 复核队列 */
+    html += '<div class="card"><div class="card-title">规则复核队列</div>' +
+      '<div class="card-sub">平台规则会变。到期回来记一句「仍有效 / 已改」，算一条有效记录。</div>';
+    if (!rules.length) html += '<div class="empty">队列里没有规则类知识。记录时勾「会过期」即可加入。</div>';
+    rules.forEach(function (k) {
+      const due = k.reviewAt <= Date.now();
+      html += '<div class="review-item"><span class="row-text" title="' + esc(k.text) + '">' + esc(k.text) + '</span>' +
+        '<span class="tag ' + (due ? 'green' : 'gray') + '">' + (due ? '待复核' : fmtDate(k.reviewAt)) + '</span>' +
+        '<button class="btn btn-sm" data-act="review-ok" data-id="' + k.id + '">仍有效</button>' +
+        '<button class="btn btn-sm" data-act="review-changed" data-id="' + k.id + '">已改</button></div>';
+    });
+    html += '</div>';
+    html += '<div class="card"><div class="card-title">本周本区节奏</div>' + weekBars(DB.knowledge, 'green') + '</div>';
+    html += '</div></div>';
+    return html;
+  }
+  function renderLearnOther() {
+    const s = otherState(), f = UI.form;
+    const recent = DB.otherStudy.slice().reverse().slice(0, 8);
+    let html = metrics([
+      { label: '本周本区', value: s.weekCount + ' 条', small: s.weekMinutes + ' 分' },
+      { label: '近 30 天有记录', value: s.streak + ' 天' },
+      { label: '写了自己的理解', value: s.noteCount + ' 条' }
+    ]);
+    html += '<div class="cols"><div class="col">';
+    html += '<div class="card"><div class="card-title">刚学了什么</div>' +
+      '<div class="card-sub">这一区不分类、不对照业务，也不产出经营动作。</div>' +
+      '<input class="input" data-model="otherText" placeholder="例：读完某本书第 3 章" value="' + esc(f.otherText) + '">' +
+      '<div class="pill-row">' +
+      pillRow([{ v: '15', l: '15 分' }, { v: '25', l: '25 分' }, { v: '45', l: '45 分' }, { v: '60', l: '60 分' }], f.otherMinutes, 'data-mins', 'other-mins', 'green') +
+      '<span class="spacer"></span><button class="btn btn-primary green" data-act="add-other">记一条</button></div>' +
+      '<div class="more-body" style="margin-top:10px"><div class="field"><label>我自己的理解（选填）</label>' +
+      '<input data-model="otherNote" value="' + esc(f.otherNote) + '" placeholder="用自己的话说一遍"></div></div></div>';
+    html += '<div class="card"><div class="card-title">最近记的</div>' +
+      rows(recent.map(function (o) { return { text: o.text, tag: '学习', minutes: o.minutes }; }), 'green', { empty: CONTENT.EMPTY.other }) + '</div>';
+    html += '</div><div class="col">';
+    html += echoCard('other', s, CONTENT.PRAISE_OTHER, 'green', '即时回音',
+      s.todayCount + ' 条 · ' + s.todayMinutes + ' 分', s.todayCount / Math.max(1, DB.settings.goalOther));
+    html += '<div class="card"><div class="card-title">本周本区节奏</div>' + weekBars(DB.otherStudy, 'green') +
+      '<div class="hint">这一区只有时长、自测和复习，不出现任何业务对照，也不制造「学这个没用」的感觉。</div></div>';
+    html += '<div class="funnel"><div class="card-title">关于分区</div>' +
+      '<div class="funnel-note">亚马逊知识和其他学习各自独立统计、独立连续天数、独立评语。两边都不显示对方的数字，互不稀释。</div></div>';
+    html += '</div></div>';
+    return html;
+  }
+  function renderLearn() {
+    const know = UI.learnSub === 'know';
+    let html = '<div class="page-head"><h1>学习</h1><p>反馈锚点：掌握度 · 两个子区各自独立</p></div>';
+    html += '<div class="subtabs">' +
+      '<button class="subtab' + (know ? ' active' : '') + '" data-act="learn-sub" data-sub="know">亚马逊知识</button>' +
+      '<button class="subtab' + (!know ? ' active' : '') + '" data-act="learn-sub" data-sub="other">其他学习</button>' +
+      '<span class="subtab-note">本区独立统计 · 近 30 天 ' + activeDays(know ? DB.knowledge : DB.otherStudy) + ' 天有记录</span></div>';
+    html += know ? renderLearnKnow() : renderLearnOther();
+    return html;
+  }
+
+  /* ---------- 页面：周报 ---------- */
+  function renderReport() {
+    const secs = currentReport();
+    const aiOn = DB.reportCache && DB.reportCache.week === weekKeys()[0] && DB.reportCache.by === 'ai';
+    let html = '<div class="page-head"><h1>周报</h1><p>' + weekKeys()[0] + ' ~ ' + weekKeys()[6] + ' · 三段分开看，不互相比较</p></div>';
+    html += '<div class="report-actions" style="margin-bottom:14px">' +
+      '<button class="btn btn-primary" data-act="ai-run"' + (UI.aiBusy ? ' disabled' : '') + '>' + (UI.aiBusy ? '生成中…' : '生成 AI 周复盘') + '</button>' +
+      '<button class="btn" data-act="report-copy">复制周报文本</button>' +
+      '<span class="spacer"></span><span style="font-size:11px;color:var(--text-3);align-self:center">' +
+      (aiOn ? '当前：AI 复盘 · ' + fmtDate(DB.reportCache.generatedAt) : '当前：规则版周报（无需 key）') + '</span></div>';
+    if (UI.aiError) html += '<div class="card" style="margin-bottom:14px;border-color:var(--line-2)"><div class="hint" style="color:var(--text)">' + esc(UI.aiError) + '</div></div>';
+    const titles = ['一、经营', '二、亚马逊知识', '三、其他学习'];
+    secs.forEach(function (t, i) {
+      const m = t.match(/^[一二三]、[^\n]*\n/);
+      const body = m ? t.slice(m[0].length) : t;
+      html += '<div class="report-section"><h3>' + titles[i] + '</h3><pre class="report-pre">' + esc(body) + '</pre></div>';
+    });
+    html += '<div class="hint">复制出去发给同事或学伴，就能收到一句真人反馈。结果只存本机，不上传。</div>';
+    /* 设置 */
+    html += '<div class="collapse"><button class="collapse-head" data-act="toggle-settings">' +
+      (UI.settingsOpen ? '▾ 收起设置' : '▸ 展开设置：目标 / AI / 备份') + '</button>';
+    if (UI.settingsOpen) {
+      const st = DB.settings;
+      html += '<div class="collapse-body"><div class="card">' +
+        '<div class="card-title">每日目标（只影响进度条，不产生惩罚）</div>' +
+        '<div class="form-grid" style="margin-top:10px">' +
+        '<div class="field"><label>经营 / 条</label><input type="number" min="1" data-set="goalOps" value="' + esc(st.goalOps) + '"></div>' +
+        '<div class="field"><label>亚马逊知识 / 条</label><input type="number" min="1" data-set="goalKnow" value="' + esc(st.goalKnow) + '"></div>' +
+        '<div class="field"><label>其他学习 / 条</label><input type="number" min="1" data-set="goalOther" value="' + esc(st.goalOther) + '"></div>' +
+        '</div></div>';
+      html += '<div class="card" style="margin-top:12px"><div class="card-title">AI 周复盘（可选）</div>' +
+        '<div class="card-sub">兼容 OpenAI 格式的端点，浏览器直连。key 只存本机，别在公用电脑填写。没填就自动用规则版。</div>' +
+        '<div class="form-grid">' +
+        '<div class="field"><label>Base URL</label><input data-set="ai.baseURL" value="' + esc(st.ai.baseURL) + '" placeholder="https://api.openai.com/v1"></div>' +
+        '<div class="field"><label>模型</label><input data-set="ai.model" value="' + esc(st.ai.model) + '" placeholder="gpt-4o-mini"></div>' +
+        '</div><div class="field" style="margin-top:8px"><label>API Key</label><input type="password" data-set="ai.key" value="' + esc(st.ai.key) + '" placeholder="留空则只用规则版"></div>' +
+        '<div class="hint">若端点不允许浏览器跨域直连（CORS），生成会失败并保留规则版周报，不影响其他功能。</div></div>';
+      html += '<div class="card" style="margin-top:12px"><div class="card-title">数据</div>' +
+        '<div class="card-sub">所有记录只存在当前浏览器。换设备用导出 / 导入，导入按 id 去重合并。</div>' +
+        '<div class="report-actions">' +
+        '<button class="btn" data-act="save-settings">保存设置</button>' +
+        '<button class="btn" data-act="export">导出 JSON 备份</button>' +
+        '<button class="btn" data-act="import">导入 JSON</button>' +
+        '<button class="btn" data-act="clear">清空全部数据</button>' +
+        '<input type="file" id="importFile" accept="application/json,.json" style="display:none">' +
+        '</div><div class="hint">' + (storageOK ? '存储状态：正常，记录会保存在本机。' : '存储状态：异常，记录不会保存。') + '</div></div>';
+      html += '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  /* ---------- 渲染 ---------- */
+  function renderAll() {
+    const tabNames = [{ k: 'ops', l: '经营' }, { k: 'learn', l: '学习' }, { k: 'report', l: '周报' }];
+    document.getElementById('tabs').innerHTML = tabNames.map(function (t) {
+      return '<button class="tab' + (UI.tab === t.k ? ' active' : '') + (UI.tab === 'learn' && t.k === 'learn' ? ' green' : '') +
+        '" data-act="nav" data-tab="' + t.k + '">' + t.l + '</button>';
+    }).join('');
+    const activeItems = UI.tab === 'learn' ? (UI.learnSub === 'know' ? DB.knowledge : DB.otherStudy) : DB.ops;
+    document.getElementById('topbarRight').textContent = '近 30 天 ' + activeDays(activeItems) + ' 天有记录 · 数据只存本机';
+    let body;
+    if (UI.tab === 'ops') body = renderOps();
+    else if (UI.tab === 'learn') body = renderLearn();
+    else body = renderReport();
+    document.getElementById('view').innerHTML = body;
+    const foots = {
+      ops: '记录天数只按「有没有做可控动作」计算，不看单量和 BSR；中断不清零，回来记第一条就自动续上。数据只存本机浏览器。',
+      learn: '两个子区各自独立统计、独立目标、独立评语。桥只从亚马逊知识区出发，其他学习区不出现任何业务对照。',
+      report: '周报三段分开呈现：经营看可控动作与归因，亚马逊知识看学用对照与复核，其他学习只看掌握度，不与业务比较。'
+    };
+    document.getElementById('foot').textContent = foots[UI.tab];
+  }
+
+  /* ---------- 事件 ---------- */
+  const view = document.getElementById('view');
+  view.addEventListener('click', function (e) {
+    const el = e.target.closest('[data-act]');
+    if (!el) return;
+    const act = el.dataset.act, f = UI.form;
+    switch (act) {
+      case 'nav': go(el.dataset.tab); break;
+      case 'ops-view': UI.opsView = el.dataset.view; go('ops', UI.opsView); break;
+      case 'ops-type': f.opsType[UI.opsView] = el.dataset.type; renderAll(); break;
+      case 'ops-mins': f.opsMinutes = el.dataset.mins; renderAll(); break;
+      case 'know-mins': f.knowMinutes = el.dataset.mins; renderAll(); break;
+      case 'other-mins': f.otherMinutes = el.dataset.mins; renderAll(); break;
+      case 'know-cat': f.knowCat = el.dataset.cat; renderAll(); break;
+      case 'learn-sub': go('learn', el.dataset.sub); break;
+      case 'add-ops': addOps(); break;
+      case 'add-know': addKnow(); break;
+      case 'add-other': addOther(); break;
+      case 'toggle-more': UI.moreOpen = !UI.moreOpen; renderAll(); break;
+      case 'bridge-send': sendToOps(el.dataset.kid); break;
+      case 'review-ok': doReview(el.dataset.id, '仍有效'); break;
+      case 'review-changed': doReview(el.dataset.id, '已改'); break;
+      case 'fill-open': UI.fillOpen = UI.fillOpen === el.dataset.id ? null : el.dataset.id; renderAll(); break;
+      case 'fill-save': saveFill(el.dataset.id); break;
+      case 'ai-run': runAI(); break;
+      case 'report-copy': copyReport(); break;
+      case 'toggle-settings': UI.settingsOpen = !UI.settingsOpen; renderAll(); break;
+      case 'save-settings': {
+        document.querySelectorAll('[data-set]').forEach(function (i) {
+          const k = i.dataset.set;
+          const val = i.value.trim();
+          if (k.indexOf('ai.') === 0) DB.settings.ai[k.slice(3)] = val;
+          else DB.settings[k] = Math.max(1, Number(val) || 1);
+        });
+        save(); renderAll(); toast('设置已保存');
+        break;
+      }
+      case 'export': exportJSON(); break;
+      case 'import': document.getElementById('importFile').click(); break;
+      case 'clear': clearAll(); break;
+    }
+  });
+  view.addEventListener('input', function (e) {
+    if (e.target.dataset.model) UI.form[e.target.dataset.model] = e.target.value;
+  });
+  view.addEventListener('change', function (e) {
+    const t = e.target;
+    if (t.dataset.check) UI.form[t.dataset.check] = t.checked;
+    if (t.dataset.model) UI.form[t.dataset.model] = t.value;
+    if (t.id === 'importFile') importJSON(t.files && t.files[0]);
+  });
+  document.getElementById('tabs').addEventListener('click', function (e) {
+    const el = e.target.closest('[data-act="nav"]');
+    if (el) go(el.dataset.tab);
+  });
+  window.addEventListener('keydown', function (e) {
+    if (e.key !== 'Enter') return;
+    const t = e.target;
+    if (!t.classList || !t.classList.contains('input')) return;
+    if (t.dataset.model === 'opsText') addOps();
+    else if (t.dataset.model === 'knowText') addKnow();
+    else if (t.dataset.model === 'otherText') addOther();
+  });
+  window.addEventListener('hashchange', function () { syncFromHash(); renderAll(); });
+
+  /* ---------- 启动 ---------- */
+  syncFromHash();
+  renderAll();
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    navigator.serviceWorker.register('sw.js').catch(function () { });
+  }
+})();
+</script>
+</body>
+</html>
