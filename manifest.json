@@ -1,0 +1,25 @@
+{
+  "name": "回声 · 工作与学习反馈",
+  "short_name": "回声",
+  "description": "给亚马逊单干卖家用的工作与学习反馈工具，数据只存本机。",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#FBFAF8",
+  "theme_color": "#FBFAF8",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
