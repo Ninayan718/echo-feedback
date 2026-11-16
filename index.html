@@ -137,6 +137,19 @@ button:disabled{cursor:default;opacity:.6}
 .weekdays span{flex:1;text-align:center;font-size:11px;color:var(--text-3)}
 .review-item{display:flex;gap:8px;align-items:center;font-size:12px;padding:7px 0;border-bottom:0.5px solid var(--line)}
 .review-item:last-child{border-bottom:none}
+.goal-split{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 10px}
+.goal-split>div{background:var(--surface);border-radius:var(--r-sm);padding:9px 11px;display:flex;flex-direction:column;gap:1px}
+.goal-split .goal-k{font-size:11px;color:var(--text-2)}
+.goal-split b{font-size:18px;font-weight:500;color:var(--green-dark)}
+.sale-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px}
+.ref-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.ref-grid>div{display:flex;flex-direction:column;gap:1px}
+.ref-grid span{font-size:11px;color:var(--text-2)}
+.ref-grid b{font-size:16px;font-weight:500}
+.databars{display:flex;align-items:flex-end;gap:2px;height:60px;margin-top:6px}
+.databar{flex:1;background:var(--green-mid);border-radius:2px 2px 0 0;min-height:2px}
+.databar.today{background:var(--green)}
+.dataaxis{display:flex;justify-content:space-between;font-size:11px;color:var(--text-3);margin-top:6px}
 #toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(10px);background:var(--text);color:#fff;padding:9px 16px;border-radius:20px;font-size:12px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;max-width:86vw;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -194,6 +207,7 @@ const CONTENT = {
   RULE_REVIEW_DAYS: 30,
   DEFAULT_SETTINGS: {
     goalOps: 5, goalKnow: 2, goalOther: 1, weekStart: 1,
+    monthlyProfitGoal: 3000, profitRate: 20, acosWarn: 30,
     ai: { baseURL: 'https://api.openai.com/v1', model: 'gpt-4o-mini', key: '' }
   },
 
@@ -238,6 +252,20 @@ const CONTENT = {
     s => s.todayCount >= s.goalOther && `到了自己设的 ${s.goalOther} 条目标。够了就停。`
   ],
 
+  PRAISE_DATA: [
+    s => s.hasToday && s.todayProfit >= s.todayNeed && s.todayNeed > 0 && `今天的利润已过线：赚了 ¥${s.todayProfit}，目标是 ¥${s.todayNeed}。`,
+    s => s.hasToday && `今天记了 ${s.todayOrders} 单、销售额 ¥${s.todayRevenue}，按利润率估的利润 ¥${s.todayProfit}。`,
+    s => s.needReached && `本月利润目标已达成：¥${s.monthProfit} / ¥${s.goal}。剩下的日子不再是「必须赚」，是余量。`,
+    s => s.daysLeft > 0 && s.needToday > 0 && `今天需要赚 ¥${s.needToday}${s.canEstimate ? '、约 ' + s.needOrders + ' 单' : ''}。按剩余 ${s.daysLeft} 天把缺口摊平了，少赚的会自动补进后面的日子。`,
+    s => s.acos !== null && s.acos > s.acosWarn && `今天 ACOS ${s.acos}% 高于你设的 ${s.acosWarn}% 警戒线。利润估算没扣广告波动，这一栏先当观察。`,
+    s => s.acos !== null && s.acos <= s.acosWarn && `今天 ACOS ${s.acos}%，在你设的 ${s.acosWarn}% 线内。`,
+    s => s.canEstimate && `近 14 天客单价 ¥${s.aov}、单均利润约 ¥${s.profitPerOrder}，按 ${s.profitRate}% 利润率估的。多品混卖时它是个均值。`,
+    s => s.monthProfit > 0 && `本月累计销售额 ¥${s.monthRevenue}，估得利润 ¥${s.monthProfit}，完成 ${s.pct}%。`,
+    s => s.logDays > 0 && `本月已经记了 ${s.logDays} 天数据。这一页是看板，不是打卡——断一天不会清零，只会如实反映在缺口里。`,
+    s => !s.hasToday && `今天还没记。先填订单、销售额和 ACOS，目标缺口会自己算出来。`,
+    s => !s.canEstimate && `再记几天就能估出单均利润，那时"约需几单"才会有数字。现在先把销售额和订单记下来。`
+  ],
+
   CHECK_NOTE: {
     3: (label, before, after, diff) => `${label} 从 ${before} 到 ${after}，${diff}。样本还小，第 7 天再看一次。`,
     7: (label, before, after, diff) => `7 天数据：${label} 从 ${before} 到 ${after}，${diff}。这里只陈述变化，不替你判断因果。`
@@ -250,7 +278,8 @@ const CONTENT = {
   EMPTY: {
     ops: '今天还没有经营动作。记一条就能拿到回音，不用等出单。',
     know: '本区今天还没有记录。看到一条有用的知识，3 秒记下来就行。',
-    other: '这一区今天还是空的。想记才记，不记也不影响别的区。'
+    other: '这一区今天还是空的。想记才记，不记也不影响别的区。',
+    data: '本月还没有数据。填第一笔订单与销售额，今日目标就能算出来。'
   }
 };
 
@@ -299,11 +328,15 @@ const CONTENT = {
   function sum(a) { return a.reduce(function (x, y) { return x + y; }, 0); }
   function minutesOf(items) { return sum(items.map(function (x) { return Number(x.minutes) || 0; })); }
   function fmtDate(ts) { const d = new Date(ts); return (d.getMonth() + 1) + '/' + d.getDate(); }
+  function daysInMonth() { const d = new Date(); return new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate(); }
+  function monthKey(k) { return String(k).slice(0, 7); }
+  function thisMonthKey() { return today().slice(0, 7); }
+  function round2(n) { return Math.round(n * 100) / 100; }
 
   /* ---------- 数据 ---------- */
   function blank() {
     return {
-      version: 1, ops: [], checkbacks: [], knowledge: [], otherStudy: [], bridge: [],
+      version: 2, ops: [], checkbacks: [], knowledge: [], otherStudy: [], bridge: [], sales: [],
       settings: JSON.parse(JSON.stringify(CONTENT.DEFAULT_SETTINGS)),
       reportCache: null, createdAt: Date.now()
     };
@@ -315,9 +348,10 @@ const CONTENT = {
       if (!raw) return blank();
       const d = JSON.parse(raw);
       const b = blank();
-      ['ops', 'checkbacks', 'knowledge', 'otherStudy', 'bridge'].forEach(function (k) {
+      ['ops', 'checkbacks', 'knowledge', 'otherStudy', 'bridge', 'sales'].forEach(function (k) {
         if (!Array.isArray(d[k])) d[k] = b[k];
       });
+      d.version = 2;
       d.settings = Object.assign({}, b.settings, d.settings || {});
       d.settings.ai = Object.assign({}, b.settings.ai, (d.settings || {}).ai || {});
       return d;
@@ -337,9 +371,10 @@ const CONTENT = {
       opsText: '', opsType: { opt: '广告', src: '看品' }, opsMinutes: '25', opsWatch: false,
       knowText: '', knowCat: '广告', knowMinutes: '25', knowRule: false,
       knowNote: '', knowUrl: '', knowEffective: '',
-      otherText: '', otherMinutes: '25', otherNote: ''
+      otherText: '', otherMinutes: '25', otherNote: '',
+      saleOrders: '', saleRevenue: '', saleAcos: ''
     },
-    moreOpen: false, settingsOpen: false, fillOpen: null,
+    moreOpen: false, settingsOpen: false, fillOpen: null, goalsOpen: false,
     aiBusy: false, lastPraise: {}, aiError: ''
   };
 
@@ -348,6 +383,7 @@ const CONTENT = {
     const h = (location.hash || '').replace(/^#/, '');
     if (h.indexOf('learn') === 0) return { tab: 'learn', sub: h.indexOf('other') >= 0 ? 'other' : 'know' };
     if (h.indexOf('report') === 0) return { tab: 'report' };
+    if (h.indexOf('data') === 0) return { tab: 'data' };
     return { tab: 'ops', view: h.indexOf('src') >= 0 ? 'src' : 'opt' };
   }
   function syncFromHash() {
@@ -374,7 +410,7 @@ const CONTENT = {
     if (!avail.length) return CONTENT.EMPTY[unit];
     let pool = avail.filter(function (t) { return t !== UI.lastPraise[unit]; });
     if (!pool.length) pool = avail;
-    const seed = sum(today().split('-').map(Number)) + state.todayCount * 3 + state.weekCount;
+    const seed = sum(today().split('-').map(Number)) + (state.todayCount || 0) * 3 + (state.weekCount || 0) + (state.todayOrders || 0);
     let text = pool[seed % pool.length];
     if (text === UI.lastPraise[unit] && pool.length > 1) text = pool[(seed + 1) % pool.length];
     UI.lastPraise[unit] = text;
@@ -461,6 +497,79 @@ const CONTENT = {
       noteCount: wk.filter(function (o) { return o.note; }).length,
       goalOther: DB.settings.goalOther
     };
+  }
+
+  /* ---------- 数据页：目标反推 ---------- */
+  function salesState() {
+    const st = DB.settings;
+    const goal = Number(st.monthlyProfitGoal) || 3000;
+    const rate = Number(st.profitRate) || 20;
+    const warn = Number(st.acosWarn) || 30;
+    const mk = thisMonthKey();
+    const monthRows = DB.sales.filter(function (s) { return monthKey(s.date) === mk; });
+    const byDate = {};
+    monthRows.forEach(function (s) { byDate[s.date] = s; });
+    const todayKey = today();
+    const td = byDate[todayKey] || null;
+    const sumOrders = sum(monthRows.map(function (s) { return Number(s.orders) || 0; }));
+    const monthRevenue = sum(monthRows.map(function (s) { return Number(s.revenue) || 0; }));
+    const monthProfit = round2(monthRevenue * rate / 100);
+    const logDays = monthRows.length;
+    /* 近 14 天有订单记录的天：用销售额/订单数估客单价，再乘利润率得单均利润 */
+    let rev14 = 0, ord14 = 0;
+    for (let i = 0; i < 14; i++) {
+      const k = daysAgoKey(i);
+      const row = DB.sales.filter(function (s) { return s.date === k; })[0];
+      if (row) { rev14 += Number(row.revenue) || 0; ord14 += Number(row.orders) || 0; }
+    }
+    const canEstimate = ord14 > 0;
+    const aov = canEstimate ? round2(rev14 / ord14) : 0;
+    const profitPerOrder = canEstimate ? round2(aov * rate / 100) : 0;
+    const d = new Date();
+    const daysLeft = daysInMonth() - d.getDate() + 1;
+    const todayRevenueRaw = td ? (Number(td.revenue) || 0) : 0;
+    /* 今日目标线只看「截止昨天」的累计：今天录多少都不会把目标拉低，保证每天目标稳定可执行 */
+    const prevProfit = round2((monthRevenue - todayRevenueRaw) * rate / 100);
+    const gap = Math.max(0, goal - prevProfit);
+    const needReached = gap <= 0;
+    const needToday = needReached ? 0 : round2(gap / daysLeft);
+    const needOrders = (canEstimate && profitPerOrder > 0 && needToday > 0)
+      ? Math.ceil(needToday / profitPerOrder) : 0;
+    const pct = goal > 0 ? Math.min(100, Math.round(monthProfit / goal * 100)) : 0;
+    const todayOrders = td ? (Number(td.orders) || 0) : 0;
+    const todayRevenue = td ? (Number(td.revenue) || 0) : 0;
+    const todayProfit = round2(todayRevenue * rate / 100);
+    const acos = td && td.acos !== '' && td.acos != null ? (Number(td.acos) || 0) : null;
+    return {
+      goal: goal, rate: rate, profitRate: rate, warn: warn, monthRevenue: round2(monthRevenue),
+      monthProfit: monthProfit, monthOrders: sumOrders, logDays: logDays, pct: pct,
+      daysLeft: daysLeft, needToday: needToday, needOrders: needOrders,
+      needReached: needReached, canEstimate: canEstimate, aov: aov,
+      profitPerOrder: profitPerOrder, hasToday: !!td, todayOrders: todayOrders,
+      todayRevenue: round2(todayRevenue), todayProfit: todayProfit, acos: acos,
+      todayNeed: needToday, monthRows: monthRows, todayKey: todayKey
+    };
+  }
+  function saveSale() {
+    const f = UI.form;
+    const orders = Math.max(0, Number(f.saleOrders));
+    const revenue = Math.max(0, Number(f.saleRevenue));
+    const acosRaw = String(f.saleAcos || '').trim();
+    const acos = acosRaw === '' ? '' : Math.max(0, Number(acosRaw));
+    if (!f.saleOrders && !f.saleRevenue) { toast('至少填订单数或销售额'); return; }
+    if (isNaN(orders) || isNaN(revenue)) { toast('订单和销售额请填数字'); return; }
+    const key = today();
+    const old = DB.sales.filter(function (s) { return s.date === key; })[0];
+    if (old) { old.orders = orders; old.revenue = revenue; old.acos = acos; old.updatedAt = Date.now(); }
+    else DB.sales.push({ id: uid(), date: key, orders: orders, revenue: revenue, acos: acos, createdAt: Date.now(), updatedAt: Date.now() });
+    f.saleOrders = ''; f.saleRevenue = ''; f.saleAcos = '';
+    save(); renderAll();
+    toast(old ? '今天这笔已更新' : '已记下，今日目标已重算');
+  }
+  function delSale(date) {
+    if (!window.confirm('删除 ' + date + ' 这一天的记录？')) return;
+    DB.sales = DB.sales.filter(function (s) { return s.date !== date; });
+    save(); renderAll(); toast('已删除');
   }
 
   /* ---------- 业务动作 ---------- */
@@ -682,7 +791,7 @@ const CONTENT = {
       try {
         const d = JSON.parse(r.result);
         if (!d || typeof d !== 'object') throw new Error('格式不对');
-        ['ops', 'checkbacks', 'knowledge', 'otherStudy', 'bridge'].forEach(function (k) {
+        ['ops', 'checkbacks', 'knowledge', 'otherStudy', 'bridge', 'sales'].forEach(function (k) {
           if (!Array.isArray(d[k])) return;
           const seen = {};
           DB[k].forEach(function (x) { seen[x.id] = 1; });
@@ -991,22 +1100,145 @@ const CONTENT = {
     return html;
   }
 
+  /* ---------- 页面：数据与目标 ---------- */
+  function renderData() {
+    const s = salesState(), f = UI.form, st = DB.settings;
+    let html = '<div class="page-head"><h1>数据</h1><p>看板，不是打卡 · 每天三格录入，目标按剩余天数动态补齐</p></div>';
+
+    /* 进度总览 */
+    html += '<div class="card" style="margin-bottom:12px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px">' +
+      '<div class="card-title" style="margin:0">' + (new Date().getMonth() + 1) + ' 月利润目标进度</div>' +
+      '<span style="font-size:11px;color:var(--text-3)">本月剩 ' + s.daysLeft + ' 天</span></div>' +
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin:10px 0 8px">' +
+      '<span>已赚 <b style="font-weight:500">¥' + s.monthProfit + '</b> / ¥' + s.goal + '</span>' +
+      '<span style="color:var(--text-3)">' + s.pct + '% · 按售价 × ' + s.rate + '% 利润率估算</span></div>' +
+      '<div class="bar green"><div class="bar-fill green" style="width:' + s.pct + '%"></div></div></div>';
+
+    /* 今日目标英雄卡 */
+    html += '<div class="echo green" style="padding:18px;margin-bottom:12px">' +
+      '<div class="echo-label">今天的目标 · ' + fmtDate(Date.now()) + '</div>';
+    if (s.needReached) {
+      html += '<div class="echo-num">本月已达标</div>' +
+        '<div style="font-size:12px;line-height:1.7">¥' + s.monthProfit + ' / ¥' + s.goal + '。剩下的日子是余量，不是欠款。</div>';
+    } else {
+      html += '<div class="echo-num">¥' + s.needToday + '</div>' +
+        '<div class="goal-split"><div><span class="goal-k">今天需要赚</span><b>¥' + s.needToday + '</b></div>' +
+        '<div><span class="goal-k">约需出</span><b>' + (s.canEstimate && s.needOrders ? s.needOrders + ' 单' : '待估') + '</b></div></div>' +
+        '<div class="echo-text">' + (s.canEstimate
+          ? '按近 14 天单均利润 ¥' + s.profitPerOrder + ' 估算 · 少赚的已摊进后面 ' + s.daysLeft + ' 天'
+          : '还没有足够的订单数据估单均利润，记满几天后「约需几单」就会显示数字。') + '</div>';
+    }
+    html += '</div>';
+
+    html += metrics([
+      { label: '今日利润（估）', value: '¥' + s.todayProfit, small: s.hasToday ? s.todayOrders + ' 单' : '未记' },
+      { label: '本月累计（估）', value: '¥' + s.monthProfit, small: s.monthOrders + ' 单' },
+      { label: '本月已记', value: s.logDays + ' 天', small: '共 ' + s.daysLeft + ' 天可用' }
+    ]);
+
+    html += '<div class="cols"><div class="col">';
+    /* 录入 */
+    html += '<div class="card"><div class="card-title">今天记一笔</div>' +
+      '<div class="card-sub">只填订单数 / 销售额 / ACOS 三格，利润按利润率自动估。同一天再填会覆盖今天那笔。</div>' +
+      '<div class="sale-grid">' +
+      '<div class="field"><label>订单数</label><input type="number" min="0" step="1" data-model="saleOrders" placeholder="0" value="' + esc(f.saleOrders) + '"></div>' +
+      '<div class="field"><label>销售额 ¥</label><input type="number" min="0" step="any" data-model="saleRevenue" placeholder="0" value="' + esc(f.saleRevenue) + '"></div>' +
+      '<div class="field"><label>ACOS %（选填）</label><input type="number" min="0" step="any" data-model="saleAcos" placeholder="留空跳过" value="' + esc(f.saleAcos) + '"></div>' +
+      '</div>' +
+      '<div class="pill-row"><span class="spacer"></span><button class="btn btn-primary green" data-act="sale-save">' + (s.hasToday ? '更新今天' : '记下今天') + '</button></div></div>';
+
+    /* 本月明细 */
+    html += '<div class="card"><div class="card-title">本月每日数据</div>' +
+      '<div class="card-sub">利润为销售额 × ' + s.rate + '% 的估算值，非对账口径。</div>';
+    if (!s.monthRows.length) html += '<div class="empty">' + esc(CONTENT.EMPTY.data) + '</div>';
+    else {
+      const rowsDesc = s.monthRows.slice().sort(function (a, b) { return b.date < a.date ? -1 : 1; });
+      html += '<div class="list">';
+      rowsDesc.forEach(function (r) {
+        const profit = round2((Number(r.revenue) || 0) * s.rate / 100);
+        const ac = r.acos !== '' && r.acos != null ? ' · ACOS ' + r.acos + '%' : '';
+        html += '<div class="row"><span class="row-text">' + esc(r.date.slice(5)) + '</span>' +
+          '<span class="tag green">' + (Number(r.orders) || 0) + ' 单</span>' +
+          '<span class="mins">¥' + round2(Number(r.revenue) || 0) + ' · 估 ¥' + profit + ac + '</span>' +
+          '<button class="btn btn-sm" data-act="sale-del" data-date="' + esc(r.date) + '">删</button></div>';
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+    html += '</div><div class="col">';
+
+    /* 即时回音 */
+    html += echoCard('data', s, CONTENT.PRAISE_DATA, 'green', '数据回音',
+      s.hasToday ? '¥' + s.todayProfit + ' · ' + s.todayOrders + ' 单' : '今日未记', 1);
+
+    /* 参考数字 */
+    html += '<div class="card"><div class="card-title">参考数字</div>' +
+      '<div class="ref-grid">' +
+      '<div><span>近 14 天客单价</span><b>¥' + s.aov + '</b></div>' +
+      '<div><span>单均利润（估）</span><b>¥' + s.profitPerOrder + '</b></div>' +
+      '<div><span>利润率</span><b>' + s.rate + '%</b></div>' +
+      '<div><span>今日 ACOS</span><b' + (s.acos !== null && s.acos > s.warn ? ' style="color:#A32D2D"' : '') + '>' + (s.acos === null ? '—' : s.acos + '%') + '</b></div>' +
+      '</div><div class="hint">ACOS 只作观察，不进利润估算。警戒线 ' + s.warn + '%，超过会提示但不扣分。</div></div>';
+
+    /* 本月销售额柱状 */
+    html += '<div class="card"><div class="card-title">本月每日销售额</div>' +
+      dataBars(s.monthRows) + '</div>';
+
+    /* 目标设置 */
+    html += '<div class="collapse"><button class="collapse-head" data-act="toggle-goals">' +
+      (UI.goalsOpen ? '▾ 收起目标设置' : '▸ 展开目标设置：月目标 / 利润率 / ACOS 警戒线') + '</button>';
+    if (UI.goalsOpen) {
+      html += '<div class="collapse-body"><div class="form-grid">' +
+        '<div class="field"><label>月利润目标 ¥</label><input type="number" min="1" data-goal="monthlyProfitGoal" value="' + esc(st.monthlyProfitGoal) + '"></div>' +
+        '<div class="field"><label>利润率 %</label><input type="number" min="1" max="100" data-goal="profitRate" value="' + esc(st.profitRate) + '"></div>' +
+        '<div class="field"><label>ACOS 警戒线 %</label><input type="number" min="1" data-goal="acosWarn" value="' + esc(st.acosWarn) + '"></div>' +
+        '</div><div class="pill-row"><span class="spacer"></span><button class="btn btn-primary green" data-act="save-goals">保存目标</button></div>' +
+        '<div class="hint">目标是你自己定的，只用来算缺口，不产生惩罚。利润率改了，历史数据会按新率重估。</div></div>';
+    }
+    html += '</div>';
+    html += '</div></div>';
+    return html;
+  }
+  function dataBars(monthRows) {
+    const n = daysInMonth(), todayDate = new Date().getDate();
+    const byDay = {};
+    monthRows.forEach(function (r) { const dd = Number(r.date.slice(8, 10)); byDay[dd] = (byDay[dd] || 0) + (Number(r.revenue) || 0); });
+    const vals = []; for (let i = 1; i <= n; i++) vals.push(byDay[i] || 0);
+    const max = Math.max.apply(null, vals.concat([1]));
+    const step = n > 20 ? 2 : 1;
+    let bars = '<div class="databars">';
+    vals.forEach(function (v, i) {
+      const h = Math.max(2, Math.round(v / max * 56));
+      bars += '<div class="databar' + (i + 1 === todayDate ? ' today' : '') + '" style="height:' + h + 'px"' +
+        (v ? ' title="' + (i + 1) + ' 日 ¥' + round2(v) + '"' : '') + '></div>';
+    });
+    bars += '</div><div class="dataaxis"><span>1 日</span><span>' + Math.round(n / 2) + ' 日</span><span>' + n + ' 日</span></div>';
+    return bars;
+  }
+
   /* ---------- 渲染 ---------- */
   function renderAll() {
-    const tabNames = [{ k: 'ops', l: '经营' }, { k: 'learn', l: '学习' }, { k: 'report', l: '周报' }];
+    const tabNames = [{ k: 'ops', l: '经营' }, { k: 'data', l: '数据' }, { k: 'learn', l: '学习' }, { k: 'report', l: '周报' }];
     document.getElementById('tabs').innerHTML = tabNames.map(function (t) {
-      return '<button class="tab' + (UI.tab === t.k ? ' active' : '') + (UI.tab === 'learn' && t.k === 'learn' ? ' green' : '') +
+      const green = (UI.tab === 'learn' && t.k === 'learn') || (UI.tab === 'data' && t.k === 'data');
+      return '<button class="tab' + (UI.tab === t.k ? ' active' : '') + (green ? ' green' : '') +
         '" data-act="nav" data-tab="' + t.k + '">' + t.l + '</button>';
     }).join('');
     const activeItems = UI.tab === 'learn' ? (UI.learnSub === 'know' ? DB.knowledge : DB.otherStudy) : DB.ops;
-    document.getElementById('topbarRight').textContent = '近 30 天 ' + activeDays(activeItems) + ' 天有记录 · 数据只存本机';
+    const rightText = UI.tab === 'data'
+      ? '本月已记 ' + salesState().logDays + ' 天 · 数据只存本机'
+      : '近 30 天 ' + activeDays(activeItems) + ' 天有记录 · 数据只存本机';
+    document.getElementById('topbarRight').textContent = rightText;
     let body;
     if (UI.tab === 'ops') body = renderOps();
+    else if (UI.tab === 'data') body = renderData();
     else if (UI.tab === 'learn') body = renderLearn();
     else body = renderReport();
     document.getElementById('view').innerHTML = body;
     const foots = {
       ops: '记录天数只按「有没有做可控动作」计算，不看单量和 BSR；中断不清零，回来记第一条就自动续上。数据只存本机浏览器。',
+      data: '这一页是看板不是打卡：利润按「销售额 × 利润率」估算，非对账口径；目标缺口按剩余天数摊平，断一天不扣分，只如实反映在缺口里。ACOS 只作观察。',
       learn: '两个子区各自独立统计、独立目标、独立评语。桥只从亚马逊知识区出发，其他学习区不出现任何业务对照。',
       report: '周报三段分开呈现：经营看可控动作与归因，亚马逊知识看学用对照与复核，其他学习只看掌握度，不与业务比较。'
     };
@@ -1031,6 +1263,17 @@ const CONTENT = {
       case 'add-ops': addOps(); break;
       case 'add-know': addKnow(); break;
       case 'add-other': addOther(); break;
+      case 'sale-save': saveSale(); break;
+      case 'sale-del': delSale(el.dataset.date); break;
+      case 'toggle-goals': UI.goalsOpen = !UI.goalsOpen; renderAll(); break;
+      case 'save-goals': {
+        document.querySelectorAll('[data-goal]').forEach(function (i) {
+          const k = i.dataset.goal;
+          DB.settings[k] = Math.max(1, Number(i.value) || 1);
+        });
+        save(); renderAll(); toast('目标已保存');
+        break;
+      }
       case 'toggle-more': UI.moreOpen = !UI.moreOpen; renderAll(); break;
       case 'bridge-send': sendToOps(el.dataset.kid); break;
       case 'review-ok': doReview(el.dataset.id, '仍有效'); break;
@@ -1075,6 +1318,7 @@ const CONTENT = {
     if (t.dataset.model === 'opsText') addOps();
     else if (t.dataset.model === 'knowText') addKnow();
     else if (t.dataset.model === 'otherText') addOther();
+    else if (t.dataset.model === 'saleAcos' || t.dataset.model === 'saleOrders' || t.dataset.model === 'saleRevenue') saveSale();
   });
   window.addEventListener('hashchange', function () { syncFromHash(); renderAll(); });
 
